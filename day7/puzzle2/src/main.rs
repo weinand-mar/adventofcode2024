@@ -36,7 +36,7 @@ fn find_valid_operator(input: &Equation) -> Option<Vec<char>> {
 fn is_valid_operator(input: &Equation, operator: &Vec<char>) -> bool {
     let mut erg = input.equation[0];
 
-    for i in (1..input.equation.len()) {
+    for i in 1..input.equation.len() {
         if operator[i-1] == '+' {
             erg = erg + input.equation[i]
         }

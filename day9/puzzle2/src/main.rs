@@ -22,7 +22,7 @@ fn main() {
     }
 
     let mut end = result.len() - 1;
-    let mut end_start = result.len() - 1;
+    let mut end_start: usize;
 
     while end != 0 {
         while end != 0 && result[end] == "." {

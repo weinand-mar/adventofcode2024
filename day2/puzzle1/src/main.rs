@@ -10,7 +10,7 @@ fn main() {
     print!("{}", result);
 }
 
-fn is_report_safe(report: &Vec<i32>, initLen: usize) -> i32 {
+fn is_report_safe(report: &Vec<i32>, init_len: usize) -> i32 {
     let mut increasing = true;
     let mut decreasing = true;
     let mut differ = true;
@@ -31,14 +31,14 @@ fn is_report_safe(report: &Vec<i32>, initLen: usize) -> i32 {
         return 1;
     }
 
-    if report.len() == initLen {
-        return check_sub_reports_safe(report, initLen);
+    if report.len() == init_len {
+        return check_sub_reports_safe(report, init_len);
     }
 
     return 0;
 }
 
-fn check_sub_reports_safe(report: &Vec<i32>, initLen: usize) -> i32 {
+fn check_sub_reports_safe(report: &Vec<i32>, init_len: usize) -> i32 {
     for x in 0..report.len() {
         let sub_report: Vec<i32> = report
             .iter()
@@ -47,7 +47,7 @@ fn check_sub_reports_safe(report: &Vec<i32>, initLen: usize) -> i32 {
             .map(|(_, e)| *e)
             .collect();
 
-        if is_report_safe(&sub_report, initLen) == 1 {
+        if is_report_safe(&sub_report, init_len) == 1 {
             return 1;
         }
     }

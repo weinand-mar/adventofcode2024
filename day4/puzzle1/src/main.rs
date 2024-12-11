@@ -12,18 +12,6 @@ fn main() {
     let m = input[0].len();
     let n = input.len();
 
-    /// nxm
-    ///  *  MMMSXXMASM
-    ///  *  MSAMXMSMSA
-    ///  *  AMXSXMAAMM
-    ///  *  MSAMASMSMX
-    ///  *  XMASAMXAMM
-    ///  *  XXAMMXXAMA
-    ///  *  SMSMSASXSS
-    ///  *  SAXAMASAAA
-    ///  *  MAMMMXMMMM
-    ///  *  MXMXAXMASX
-
     for j in 0..m {
         let mut new_string = String::new();
         for i in 0..n {

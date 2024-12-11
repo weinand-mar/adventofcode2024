@@ -64,7 +64,6 @@ fn is_stuck_in_loop_and_update_map(visited_map: &mut HashMap<(usize,usize), Vec<
 
 struct MoveResult {
     new_pos:(usize, usize),
-    already_visited:bool,
 }
 
 fn move_guard(pos: (usize, usize), input: &mut Vec<Vec<char>>) -> MoveResult {
@@ -76,13 +75,10 @@ fn move_guard(pos: (usize, usize), input: &mut Vec<Vec<char>>) -> MoveResult {
         _ => panic!("Invalid direction"),
     };
 
-    let allready_visited = input[new_pos.0][new_pos.1] == 'X';
-
     input[new_pos.0][new_pos.1] = input[pos.0][pos.1];
     input[pos.0][pos.1] = 'X';
     return MoveResult {
         new_pos: new_pos,
-        already_visited: allready_visited,
     };
 }
 
