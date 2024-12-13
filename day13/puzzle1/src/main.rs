@@ -1,6 +1,3 @@
-use std::{ops::Mul, str::FromStr};
-
-use num_bigint::BigInt;
 use regex::Regex;
 fn main() {
     let input = utils::read_file_into_list("day13/puzzle1/input");
@@ -10,11 +7,15 @@ fn main() {
     let re = Regex::new(r"Button [AB]: X\+(\d*), Y\+(\d*)").unwrap();
     let re2 = Regex::new(r"Prize: X=(\d*), Y=(\d*)").unwrap();
     let mut token = 0;
+    let mut token_part2 = 0;
     loop {
         let next = iter.next();
         if next.is_none() {
             break;
         }
+
+        let mut is_valid = true;
+        let mut is_valid_part2 = true;
 
         let l1 = next.unwrap();
         let l2 = iter.next().unwrap();
@@ -29,36 +30,58 @@ fn main() {
         let ay = l1_captures[2].parse::<i128>().unwrap();
         let bx = l2_captures[1].parse::<i128>().unwrap();
         let by = l2_captures[2].parse::<i128>().unwrap();
-        let x = l3_captures[1].parse::<i128>().unwrap() + 10000000000000;
-        let y = l3_captures[2].parse::<i128>().unwrap() + 10000000000000;
+        let x = l3_captures[1].parse::<i128>().unwrap();
+        let y = l3_captures[2].parse::<i128>().unwrap();
+
+        let x_part2 = l3_captures[1].parse::<i128>().unwrap() + 10000000000000;
+        let y_part2 = l3_captures[2].parse::<i128>().unwrap() + 10000000000000;
 
         let b1 = y * ax - ay * x;
         let b2 = by * ax - bx * ay;
         let b = b1 / b2;
 
+        let b1_part2 = y_part2 * ax - ay * x_part2;
+        let b_part2 = b1_part2 / b2;
+
         // Überprüfen ob die Division ganzzahlig war
         if b * b2 != b1 {
-            continue;
+            is_valid = false;
         }
+        if b_part2 * b2 != b1_part2 {
+            is_valid_part2 = false;
+        }
+
         let a = (x - bx * b) / ax;
+        let a_part2 = (x_part2 - bx * b_part2) / ax;
 
         // Überprüfen ob die Division ganzzahlig war
         if a * ax != x - bx * b {
-            continue;
+            is_valid = false;
+        }
+        if a_part2 * ax != x_part2 - bx * b_part2 {
+            is_valid_part2 = false;
         }
 
         if a < 0 || b < 0 {
-            continue;
+            is_valid = false;
+        }
+        if a_part2 < 0 || b_part2 < 0 {
+            is_valid_part2 = false;
         }
 
-        let t = a * 3 + b;
+        if a > 100 || b > 100 {
+            is_valid = false;
+        }
 
-        token += t;
-        println!("Button A: X+{}, Y={}", ax, ay);
-        println!("Button B: X+{}, Y={}", bx, by);
-        println!("Prize: X={}, y={}", x, y);
-        println!("a={a}, y={b}");
-        println!();
+        if is_valid {
+            let t = a * 3 + b;
+            token += t;
+        }
+        if is_valid_part2 {
+            let t = a_part2 * 3 + b_part2;
+            token_part2 += t;
+        }
     }
-    println!("{token}");
+    println!("Part1 = {token}");
+    println!("Part2 = {token_part2}");
 }
