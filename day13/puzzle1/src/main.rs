@@ -32,36 +32,26 @@ fn main() {
         let x = l3_captures[1].parse::<i128>().unwrap() + 10000000000000;
         let y = l3_captures[2].parse::<i128>().unwrap() + 10000000000000;
 
-        let sub_1 = y * ax;
-        let sub_2 = ay * x;
-        let sub_3 = by * ax;
-        let sub_4 = bx * ay;
-
-        // Div Zero überprung und Überprüfung ob Ergebnis der Division negativ ist
-        if sub_3 == sub_4 || sub_1 < sub_2 && sub_3 > sub_4 || sub_1 > sub_2 && sub_3 < sub_4 {
-            continue;
-        }
-
-        let b1 = sub_1 - sub_2;
-        let b2 = sub_3 - sub_4;
+        let b1 = y * ax - ay * x;
+        let b2 = by * ax - bx * ay;
         let b = b1 / b2;
 
         // Überprüfen ob die Division ganzzahlig war
         if b * b2 != b1 {
             continue;
         }
-
-        // ax kann nie negativ oder 0 sein, daher hier nur überprüfen ob Nenner negativ ist
-        if x < bx * b {
-            continue;
-        }
         let a = (x - bx * b) / ax;
 
         // Überprüfen ob die Division ganzzahlig war
-        if a * ax != (x - bx * b) {
+        if a * ax != x - bx * b {
             continue;
         }
-        let t = a + b * 3;
+
+        if a < 0 || b < 0 {
+            continue;
+        }
+
+        let t = a * 3 + b;
 
         token += t;
         println!("Button A: X+{}, Y={}", ax, ay);
@@ -71,10 +61,4 @@ fn main() {
         println!();
     }
     println!("{token}");
-    // 2906507091332038656
-    // 2906507091332038656
-    // 96134449629749
-    // 436537413428004568
-    // 2858055499541968099
-    // 1851851851852001
 }
