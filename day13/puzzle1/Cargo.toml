@@ -1,9 +1,10 @@
 [package]
-name = "day12_puzzle1"
+name = "day13_puzzle1"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 utils = { path = "../../utils" }
-image = "0.25.5"
-rand = "0.8.5"
+regex = "1.11.1"
+big-int = "7.0.0"
+num-bigint = "0.4.6"

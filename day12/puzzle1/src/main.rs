@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-
+use rand::Rng; // 0.8.5
 fn main() {
     let fields = utils::read_file_into_list_of_list_of_chars("day12/puzzle1/input");
     let mut cluster: HashMap<char, Vec<HashSet<(usize, usize)>>> = HashMap::new();
@@ -181,7 +181,29 @@ fn main() {
     }
     println!("Part1 = {sum_total}");
     println!("Part2 = {total_sum_2}");
+    visualize(&cluster, &fields);
 }
+
+fn visualize(cluster: &HashMap<char, Vec<HashSet<(usize, usize)>>>, fields: &Vec<Vec<char>>) {
+    let mut imgbuf = image::ImageBuffer::new(fields.len() as u32 * 10, fields[0].len() as u32 * 10);
+    for asdf in cluster {
+        let rgb = image::Rgb([rand::thread_rng().gen_range(0..255) as u8, rand::thread_rng().gen_range(0..255) as u8, rand::thread_rng().gen_range(0..255) as u8]);
+        for clu in asdf.1 {
+            for &pos in clu {
+                let (x, y) = pos;
+                for i in 0..10 {
+                    for j in 0..10 {
+                        let pixel = imgbuf.get_pixel_mut(x as u32 * 10 + i, y as u32 * 10 + j);
+                        let image::Rgb(data) = *pixel;
+                        *pixel = rgb;
+                    }
+                }
+            }
+        }
+    }
+    imgbuf.save("fractal.png").unwrap();
+}
+
 
 fn count_non_same_neightbour(
     pos: &(usize, usize),
