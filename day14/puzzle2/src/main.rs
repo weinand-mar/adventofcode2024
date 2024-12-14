@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 struct Robot {
     p: (i32, i32),
     v: (i32, i32),
@@ -34,9 +36,15 @@ fn main() {
 
             vec[r.p.0 as usize + r.p.1 as usize * w] += 1;
         }
-        save_to_jpg(&vec, w, h, iterations);
+        if (iterations - 8) % 101 == 0 || (iterations - 78) % 103 == 0 {
+            let num_components = components(&vec, w, h).len();
+            if num_components < 200 {
+                println!("{}, {}", iterations, num_components);
+                save_to_jpg(&vec, w, h, iterations);
+            }
+        }
         iterations += 1;
-        if iterations > 100000 {
+        if iterations > 10000000 {
             break;
         }
     }
@@ -51,7 +59,7 @@ fn save_to_jpg(vec: &Vec<i32>, w: usize, h: usize, iterations: i32) {
             if vec[i * w + j] == 0 {
             } else {
                 let pixel = imgbuf.get_pixel_mut(j as u32, i as u32);
-                let image::Rgb(data) = *pixel;
+                // let image::Rgb(data) = *pixel;
                 *pixel = rgb;
             }
         }
@@ -59,10 +67,8 @@ fn save_to_jpg(vec: &Vec<i32>, w: usize, h: usize, iterations: i32) {
 
     let mut s = "day14/puzzle2/pics/".to_owned();
     s.push_str(&iterations.to_string());
-    s.push_str(&".png".to_owned());
-    imgbuf
-        .save(s.as_str())
-        .unwrap();
+    s.push_str(&".bmp".to_owned());
+    imgbuf.save(s.as_str()).unwrap();
 }
 
 fn map_to_robot(str: &String) -> Robot {
@@ -85,4 +91,45 @@ fn map_to_robot(str: &String) -> Robot {
         p: (split[0], split[1]),
         v: (split2[0], split2[1]),
     };
+}
+
+fn components(input: &Vec<i32>, w: usize, h: usize) -> Vec<HashSet<(usize, usize)>> {
+    let mut components: Vec<HashSet<(usize, usize)>> = Vec::new();
+    let mut global_visited: HashSet<(usize, usize)> = HashSet::new();
+
+    for i in 0..w {
+        for j in 0..h {
+            if input[i + j * w] > 0 && !global_visited.contains(&(i, j)) {
+                let component = dfs(input, w, h, (i, j));
+                for p in component.iter() {
+                    global_visited.insert(p.clone());
+                }
+                components.push(component);
+            }
+        }
+    }
+    return components;
+}
+
+fn dfs(input: &Vec<i32>, w: usize, h: usize, start: (usize, usize)) -> HashSet<(usize, usize)> {
+    let mut stack = vec![start];
+    let mut visited: HashSet<(usize, usize)> = HashSet::new();
+    while !stack.is_empty() {
+        let item = stack.pop().unwrap();
+        visited.insert(item);
+
+        if item.0 > 0 && input[item.0 - 1 + item.1 * w] > 0 && !visited.contains(&(item.0 - 1, item.1)){
+            stack.push((item.0 - 1, item.1));
+        }
+        if item.0 < w - 1 && input[item.0 + 1 + item.1 * w] > 0 && !visited.contains(&(item.0 + 1, item.1)) {
+            stack.push((item.0 + 1, item.1));
+        }
+        if item.1 > 0 && input[item.0 + (item.1 - 1) * w] > 0 && !visited.contains(&(item.0, item.1 - 1)) {
+            stack.push((item.0, item.1 - 1));
+        }
+        if item.1 < h - 1 && input[item.0 + (item.1 + 1) * w] > 0 && !visited.contains(&(item.0, item.1 + 1)) {
+            stack.push((item.0, item.1 + 1));
+        }
+    }
+    return visited;
 }
