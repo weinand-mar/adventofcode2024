@@ -264,6 +264,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "day14_puzzle1"
+version = "0.1.0"
+dependencies = [
+ "utils",
+]
+
+[[package]]
+name = "day14_puzzle2"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "utils",
+]
+
+[[package]]
 name = "day1_puzzle1"
 version = "0.1.0"
 dependencies = [
