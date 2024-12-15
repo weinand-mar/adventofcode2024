@@ -279,6 +279,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "day15_puzzle1"
+version = "0.1.0"
+dependencies = [
+ "utils",
+]
+
+[[package]]
+name = "day15_puzzle2"
+version = "0.1.0"
+dependencies = [
+ "utils",
+]
+
+[[package]]
 name = "day1_puzzle1"
 version = "0.1.0"
 dependencies = [
