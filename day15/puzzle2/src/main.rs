@@ -1,7 +1,9 @@
 use std::{
     collections::HashMap,
-    io::{stdin, Read, Stdin},
+    io::{stdin, stdout, Read, Stdin, Write},
 };
+
+use colored::Colorize;
 
 fn main() {
     let directions_map =
@@ -14,7 +16,6 @@ fn main() {
 
     let mut robot = find_robot(&warehouse);
 
-    println!("{:?}", directions);
     print_warehouse(&warehouse);
     for (i, dir_input) in directions.iter().enumerate() {
         let dir = *directions_map.get(dir_input).unwrap();
@@ -30,10 +31,11 @@ fn main() {
 
         // let mut s = String::new();
         // stdin().read_line(&mut s);
+        print_warehouse(&warehouse);
     }
 
     // print_warehouse(&warehouse);
-    // println!();
+    println!();
 
     let mut sum = 0;
     for y in 0..warehouse.len() {
@@ -80,7 +82,6 @@ fn complex_move(robot: &mut (i32, i32), warehouse: &mut Vec<Vec<char>>, dir: (i3
                 } else if warehouse_above == ']' {
                     if !move_items_in_row.contains(&(above.0 - 1, above.1)) {
                         move_items_in_row.push((above.0 - 1, above.1));
-
                     }
                     is_above_free = false;
                 }
@@ -133,7 +134,6 @@ fn simple_move(robot: &mut (i32, i32), warehouse: &mut Vec<Vec<char>>, dir: (i32
 
     // Kann nicht verschoben werden
     if cant_move {
-        println!("Cant move");
         return;
     }
 
@@ -151,12 +151,24 @@ fn simple_move(robot: &mut (i32, i32), warehouse: &mut Vec<Vec<char>>, dir: (i32
 }
 
 fn print_warehouse(warehouse: &Vec<Vec<char>>) {
+    clearscreen::clear().unwrap();
+    let mut newline = String::new();
     for y in 0..warehouse.len() {
         for x in 0..warehouse[y].len() {
-            print!("{}", warehouse[y][x]);
+            if warehouse[y][x] == '#' {
+                newline.push_str(String::from(warehouse[y][x]).red().to_string().as_str());
+            } else if warehouse[y][x] == '[' || warehouse[y][x] == ']' {
+                newline.push_str(String::from(warehouse[y][x]).green().to_string().as_str());
+            } else if warehouse[y][x] == '@' {
+                newline.push_str(String::from(warehouse[y][x]).blue().to_string().as_str());
+            } else {
+                newline.push_str(String::from(warehouse[y][x]).as_str());
+            }
         }
-        println!();
+        newline.push('\n');
+        stdout().flush().unwrap();
     }
+    print!("{newline}");
 }
 
 fn read_warehouse(input: &Vec<String>) -> Vec<Vec<char>> {
