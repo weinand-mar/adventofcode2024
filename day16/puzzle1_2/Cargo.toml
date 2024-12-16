@@ -1,0 +1,9 @@
+[package]
+name = "day16_puzzle1_2"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+utils = { path = "../../utils" }
+clearscreen = "3.0.0"
+colored = "2.2.0"

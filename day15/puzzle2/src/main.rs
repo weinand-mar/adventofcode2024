@@ -166,9 +166,9 @@ fn print_warehouse(warehouse: &Vec<Vec<char>>) {
             }
         }
         newline.push('\n');
-        stdout().flush().unwrap();
     }
     print!("{newline}");
+    stdout().flush().unwrap();
 }
 
 fn read_warehouse(input: &Vec<String>) -> Vec<Vec<char>> {
