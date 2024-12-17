@@ -10,7 +10,7 @@ fn main() {
     let start = search_letter(&input, 'S');
     let end = search_letter(&input, 'E');
 
-    let mut abstand: Vec<usize> = vec![usize::MAX-5000; input.len() * input[0].len()];
+    let mut abstand: Vec<usize> = vec![usize::MAX - 5000; input.len() * input[0].len()];
     let mut vorgaenger: Vec<Option<(usize, usize)>> = vec![None; input.len() * input[0].len()];
     let mut Q: Vec<(usize, usize)> = Vec::new();
     for y in 0..input.len() {
@@ -25,7 +25,7 @@ fn main() {
             .iter()
             .enumerate()
             .min_by(|a, b| {
-                abstand[a.1.0 + a.1.1 * input.len()].cmp(&abstand[b.1.0 + b.1.1 * input.len()])
+                abstand[a.1 .0 + a.1 .1 * input.len()].cmp(&abstand[b.1 .0 + b.1 .1 * input.len()])
             })
             .unwrap();
         Q.remove(i);
@@ -46,7 +46,7 @@ fn main() {
         }
 
         for v in nachbar {
-            // if Q.contains(&v) {
+            if Q.contains(&v) {
                 let vor_opt = vorgaenger[u.0 + u.1 * input.len()];
                 let weigth = match vor_opt {
                     Some(vor) => {
@@ -79,11 +79,9 @@ fn main() {
                         path.push(u);
                     }
                     print_maze(&input, &path);
-                    if path[0] == (15,8) {
-                        let mut s = String::new();
-                        stdin().read_line(&mut s);
-                    }
-                // }
+                    let mut s = String::new();
+                    stdin().read_line(&mut s);
+                }
             }
         }
     }
@@ -94,7 +92,7 @@ fn main() {
         u = vorgaenger[u.0 + u.1 * input.len()].unwrap();
         path.push(u);
     }
-    // print_maze(&input, &path);
+    print_maze(&input, &path);
     println!();
     println!("{}", abstand[end.0 + end.1 * input.len()]);
 }
