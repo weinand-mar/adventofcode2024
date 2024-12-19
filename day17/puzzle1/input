@@ -1,0 +1,26 @@
+Register A: 41644071
+Register B: 0
+Register C: 0
+
+Program: 2,4,1,2,7,5,1,7,4,4,0,3,5,5,3,0
+
+BST A # B = A % 8
+BXL 2 # B = B XOR 2
+CDV C # C = A / 2^C
+BXL 7 # B = B XOR 7
+BXC 4 # B = B XOR C
+ADV 3 # A = A / 8 (1000)
+OUT B # 
+JNZ 0 #
+
+Lade die ersten drei Bits von A in B
+B = B XOR 2 
+B = B XOR 7
+B = B XOR C
+OUT B
+Entferne die ersten C bits von A und speichere es in C
+
+
+A muss 16*3 Bits lang sein
+
+B muss 2 sein

@@ -27,6 +27,16 @@ pub fn read_file_into_list(path: &str) -> Vec<String> {
     .collect();
 }
 
+pub fn read_file_into_list_of_cordinates(path: &str) -> Vec<(usize, usize)> {
+    let read_to_string = fs::read_to_string(path).unwrap();
+
+    return read_to_string.lines()
+    .into_iter()
+    .map(|x| x.split(",").collect::<Vec<&str>>())
+    .map(|x| (x[0].parse::<usize>().unwrap(), x[1].parse::<usize>().unwrap()))
+    .collect();
+}
+
 pub fn read_file_into_list_of_list(path: &str) -> Vec<Vec<i32>> {
     let read_to_string = fs::read_to_string(path).unwrap();
 

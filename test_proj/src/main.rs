@@ -1,4 +1,5 @@
 use std::time::Instant;
 fn main() {
-   println!("{:?}", 3.cmp(&4));
+   println!("{:b}", 1);
+   println!("{:b}", (1 << 6) + (2 << 3) + 3);
 }

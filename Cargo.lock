@@ -364,6 +364,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "day18_puzzle1"
+version = "0.1.0"
+dependencies = [
+ "colored",
+ "utils",
+]
+
+[[package]]
 name = "day1_puzzle1"
 version = "0.1.0"
 dependencies = [
