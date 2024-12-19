@@ -9,6 +9,58 @@ fn main() {
     let start = search_letter(&input, 'S');
     let end = search_letter(&input, 'E');
 
+    let s = start.0 + start.1 * input.len();
+    let e = end.0 + end.1 * input.len();
+    let mut G = map_g(&input);
+    G[s].insert(((start.1 - 1) * input.len() + start.0), 1001);
+    G[s].insert((start.1 * input.len() + start.0 + 1), 1);
+
+    let now = std::time::Instant::now();
+    println!("DFS");
+    let path_to_end = dfs(&input, start, end);
+    println!("{}", path_to_end[0].2);
+    let paths = path_to_end.into_iter().map(|x| x.0).collect::<Vec<Vec<(usize, usize)>>>();
+    let visited = get_all_nodes_on_paths(&paths);
+    println!("{}", visited.len());
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+    
+    let now = std::time::Instant::now();
+    println!();
+    println!("Dijkstra");
+    let (abstand, vorgaenger) = dijkstra(&G, s);
+    let paths = trace_back_all_paths(&vorgaenger, &input, e);
+    let visited = get_all_nodes_on_paths(&paths);
+    println!("{}", abstand[e]);
+    println!("{}", visited.len());
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
+    let now = std::time::Instant::now();
+    println!();
+    println!("Bellman Ford");
+    let (abstand, vorgaenger) = bellman_ford(&G, s);
+    let paths = trace_back_all_paths(&vorgaenger, &input, e);
+    let visited = get_all_nodes_on_paths(&paths);
+    println!("{}", abstand[e]);
+    println!("{}", visited.len());
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
+    print_maze(&input, &paths);
+}
+
+fn get_all_nodes_on_paths(paths: &Vec<Vec<(usize, usize)>>) -> HashSet<(usize, usize)> {
+    let mut visited = HashSet::new();
+    for path in paths {
+        for v in path {
+            visited.insert(*v);
+        }
+    }
+    return visited;
+}
+
+fn dfs(input: &Vec<Vec<char>>, start: (usize, usize), end:(usize, usize)) -> Vec<(Vec<(usize, usize)>, (i32, i32), usize)> {
     let mut abstand: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
     for y in 0..input.len() {
         for x in 0..input[y].len() {
@@ -56,26 +108,60 @@ fn main() {
             }
         }
     }
+    return path_to_end;
+}
 
-    let paths = path_to_end.into_iter().map(|x| x.0).collect::<Vec<Vec<(usize, usize)>>>();
-    print_maze(&input, &paths);
-    let mut visited = HashSet::new();
-    for path in &paths {
-        for v in path {
-            visited.insert(*v);
+static NORTH: usize = 0;
+static SOUTH: usize = 1;
+static EAST: usize = 2;
+static WEST: usize = 3;
+static DIRS: [(i32, i32); 4] = [(0, -1), (0, 1), (1, 0), (-1, 0)];
+
+fn dir_to_index(dir: (i32, i32)) -> usize {
+    return match dir {
+        (-1, 0) => WEST,
+        (1, 0) => EAST,
+        (0, 1) => SOUTH,
+        (0, -1) => NORTH,
+        _ => panic!(),
+    };
+}
+
+fn dijkstra(G: &Vec<HashMap<usize, usize>>, s: usize) -> (Vec<usize>, Vec<Vec<usize>>) {
+    let mut abstand: Vec<usize> = vec![usize::MAX - 5000; G.len()];
+    let mut vorgaenger: Vec<Vec<usize>> = vec![Vec::new(); G.len()];
+    abstand[s] = 0;
+
+    let mut Q: Vec<usize> = Vec::new();
+    for y in 0..G.len() {
+        Q.push(y);
+    }
+    while !Q.is_empty() {
+        let (i, &u) = Q
+            .iter()
+            .enumerate()
+            .min_by(|&a, &b| abstand[*a.1].cmp(&abstand[*b.1]))
+            .unwrap();
+        Q.remove(i);
+
+        for (&v, &w) in G[u].iter() {
+            let alt = abstand[u] + w;
+            if alt < abstand[v] {
+                abstand[v] = alt;
+                vorgaenger[v] = vec![u];
+                Q.push(v);
+            }
+            if alt == abstand[v] {
+                if !vorgaenger[v].contains(&u) {
+                    vorgaenger[v].push(u);
+                }
+            }
         }
     }
-    println!("{cost_to_end}");
-    println!("{}", visited.len());
+    return (abstand, vorgaenger);
+}
 
-    let s = start.0 + start.1 * input.len();
-    let e = end.0 + end.1 * input.len();
-
-    let mut G = map_g(&input);
-    G[s].insert(((start.1 - 1) * input.len() + start.0), 1001);
-
-    let (abstand, vorgaenger) = dijkstra(&G, s);
-
+fn trace_back_all_paths(vorgaenger: &Vec<Vec<usize>>, input: &Vec<Vec<char>>, e: usize) -> Vec<Vec<(usize, usize)>> {
     let mut paths = vec![vec![e]];
     let mut finished_paths = Vec::new();
     while !paths.is_empty() {
@@ -128,129 +214,7 @@ fn main() {
         }
         new_paths.push(new_path);
     }
-
-    let mut visited = HashSet::new();
-    print_maze(&input, &new_paths);
-    for path in &new_paths {
-        for v in path {
-            visited.insert(*v);
-        }
-    }
-    println!("{}", abstand[e]);
-    println!("{}", visited.len());
-}
-
-fn dijkstra2(
-    G: &Vec<Vec<char>>,
-    s: (usize, usize),
-) -> (
-    HashMap<(usize, usize), Vec<usize>>,
-    HashMap<(usize, usize), Vec<Option<(usize, usize)>>>,
-) {
-    let mut abstand: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
-    let mut vorgaenger: HashMap<(usize, usize), Vec<Option<(usize, usize)>>> = HashMap::new();
-    const mux: usize = usize::MAX - 5000;
-    let mut Q: HashSet<(usize, usize)> = HashSet::new();
-    for y in 0..G.len() {
-        for x in 0..G[y].len() {
-            if G[y][x] != '#' {
-                abstand.insert((x, y), vec![mux; 4]);
-                vorgaenger.insert((x, y), vec![None; 4]);
-                Q.insert((x, y));
-            }
-        }
-    }
-    abstand.insert(s, vec![mux, mux, 0, mux]);
-
-    while !Q.is_empty() {
-        let &u = Q
-            .iter()
-            .min_by_key(|u| abstand.get(&u).unwrap().iter().min().unwrap())
-            .unwrap();
-
-        Q.remove(&u);
-
-        for dir in DIRS {
-            let v = (u.0 as i32 + dir.0, u.1 as i32 + dir.1);
-            if v.0 >= 0 && v.1 >= 0 {
-                let v = (v.0 as usize, v.1 as usize);
-                if v.0 < G.len() && v.1 < G.len() && G[v.1][v.0] != '#' {
-                    let a = abstand.get(&u).unwrap();
-                    let mut alt = usize::MAX;
-                    for i in 0..DIRS.len() {
-                        let mut w = a[i];
-                        if dir_to_index(dir) != i {
-                            w += 1000;
-                        }
-                        w += 1;
-                        if w < alt {
-                            alt = w;
-                        }
-                    }
-                    let a_v = abstand.get_mut(&v).unwrap();
-                    if alt < a_v[dir_to_index(dir)] {
-                        a_v[dir_to_index(dir)] = alt;
-                        vorgaenger.get_mut(&v).unwrap()[dir_to_index(dir)] = Some(u);
-                    }
-                }
-            }
-        }
-    }
-
-    return (abstand, vorgaenger);
-}
-
-static NORTH: usize = 0;
-static SOUTH: usize = 1;
-static EAST: usize = 2;
-static WEST: usize = 3;
-static DIRS: [(i32, i32); 4] = [(0, -1), (0, 1), (1, 0), (-1, 0)];
-
-fn dir_to_index(dir: (i32, i32)) -> usize {
-    return match dir {
-        (-1, 0) => WEST,
-        (1, 0) => EAST,
-        (0, 1) => SOUTH,
-        (0, -1) => NORTH,
-        _ => panic!(),
-    };
-}
-
-fn dijkstra(G: &Vec<HashMap<usize, usize>>, s: usize) -> (Vec<usize>, Vec<Vec<usize>>) {
-    let mut abstand: Vec<usize> = vec![usize::MAX - 5000; G.len()];
-    let mut vorgaenger: Vec<Vec<usize>> = vec![Vec::new(); G.len()];
-    abstand[s] = 0;
-
-    let mut Q: Vec<usize> = Vec::new();
-    // for y in 0..G.len() {
-    //     Q.push(y);
-    // }
-    Q.push(s);
-    while !Q.is_empty() {
-        // let (i, &u) = Q
-        //     .iter()
-        //     .enumerate()
-        //     .min_by(|&a, &b| abstand[*a.1].cmp(&abstand[*b.1]))
-        //     .unwrap();
-        // Q.remove(i);
-
-        let u = Q.pop().unwrap();
-
-        for (&v, &w) in G[u].iter() {
-            let alt = abstand[u] + w;
-            if alt < abstand[v] {
-                abstand[v] = alt;
-                vorgaenger[v] = vec![u];
-                Q.push(v);
-            }
-            if alt == abstand[v] {
-                if !vorgaenger[v].contains(&u) {
-                    vorgaenger[v].push(u);
-                }
-            }
-        }
-    }
-    return (abstand, vorgaenger);
+    return new_paths;
 }
 
 fn bellman_ford(G: &Vec<HashMap<usize, usize>>, s: usize) -> (Vec<usize>, Vec<Vec<usize>>) {
