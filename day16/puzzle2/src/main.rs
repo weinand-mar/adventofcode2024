@@ -1,59 +1,80 @@
 use std::{
-    collections::{HashMap, HashSet},
-    usize,
+    collections::{HashMap, HashSet}, io::stdin, path, usize
 };
 
 use colored::Colorize;
-
+static MAX: usize = usize::MAX;
 fn main() {
     let input = utils::read_file_into_list_of_list_of_chars("day16/puzzle1/input");
     let start = search_letter(&input, 'S');
     let end = search_letter(&input, 'E');
+
+    let mut abstand: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
+    for y in 0..input.len() {
+        for x in 0..input[y].len() {
+            if input[y][x] != '#' {
+                abstand.insert((x, y), vec![MAX; 4]);
+            }
+        }
+    }
+    abstand.insert(start, vec![MAX, MAX, 0, MAX]);
+
+    let mut stack = vec![(vec![start], DIRS[EAST], 0)];
+
+    let mut path_to_end = Vec::new();
+    let mut cost_to_end = MAX;
+
+    while let Some((path, dir, cost)) = stack.pop() {
+        let u = path[path.len() - 1];
+
+        if u == end {
+            if cost < cost_to_end {
+                path_to_end = vec![(path, dir, cost)];
+                cost_to_end = cost;
+            }
+            else if cost == cost_to_end {
+                path_to_end.push((path, dir, cost));
+            }
+            continue;
+        }
+
+        for new_dir in DIRS {
+            let v = (u.0 as i32 + new_dir.0, u.1 as i32 + new_dir.1);
+            if v.0 >= 0 && v.1 >= 0 {
+                let v = (v.0 as usize, v.1 as usize);
+                if v.0 < input.len() && v.1 < input.len() && input[v.1][v.0] != '#' {
+                    let edge_cost = if new_dir == dir { 1 } else { 1001 };
+
+                    let old_cost = abstand.get(&v).unwrap()[dir_to_index(new_dir)];
+                    if cost + edge_cost <= old_cost && cost + edge_cost <= cost_to_end {
+                        abstand.get_mut(&v).unwrap()[dir_to_index(new_dir)] = cost + edge_cost;
+                        let mut cloned = path.clone();
+                        cloned.push(v);
+                        stack.push((cloned, new_dir, cost + edge_cost));
+                    }
+                }
+            }
+        }
+    }
+
+    let paths = path_to_end.into_iter().map(|x| x.0).collect::<Vec<Vec<(usize, usize)>>>();
+    print_maze(&input, &paths);
+    let mut visited = HashSet::new();
+    for path in &paths {
+        for v in path {
+            visited.insert(*v);
+        }
+    }
+    println!("{cost_to_end}");
+    println!("{}", visited.len());
+
     let s = start.0 + start.1 * input.len();
     let e = end.0 + end.1 * input.len();
 
     let mut G = map_g(&input);
     G[s].insert(((start.1 - 1) * input.len() + start.0), 1001);
 
-    // let (abstand, vorgaenger) = dijkstra(&G, s);
-
-    // let mut dist = vec![vec![0; G.len()]; G.len()];
-
-    // for v in 0..G.len() {
-    //     dist[v][v] = 0;
-    // }
-
-    // for k in 0..G.len() {
-    //     for i in 0..G.len() {
-    //         for j in 0..G.len() {
-    //             if dist[i][j] > dist[i][k] + dist[k][j] {
-    //                 dist[i][j] = dist[i][k] + dist[k][j];
-    //             }
-    //         }
-    //     }
-    // }
-
-    // println!("{:?}", dist[s][e]);
-
-    let mut abstand: Vec<usize> = vec![usize::MAX - 5000; G.len()];
-    let mut vorgaenger: Vec<Vec<usize>> = vec![Vec::new(); G.len()];
-    abstand[s] = 0;
-
-    for _ in 0..G.len() - 1 {
-        for u in 0..G.len() {
-            for (&v, &w) in &G[u] {
-                if abstand[u] + w < abstand[v] {
-                    abstand[v] = abstand[u] + w;
-                    vorgaenger[v] = vec![u];
-                }
-                else if abstand[u] + w == abstand[v] {
-                    if !vorgaenger[v].contains(&u) {
-                        vorgaenger[v].push(u);
-                    }
-                }
-            }
-        }
-    }
+    let (abstand, vorgaenger) = dijkstra(&G, s);
 
     let mut paths = vec![vec![e]];
     let mut finished_paths = Vec::new();
@@ -119,36 +140,137 @@ fn main() {
     println!("{}", visited.len());
 }
 
+fn dijkstra2(
+    G: &Vec<Vec<char>>,
+    s: (usize, usize),
+) -> (
+    HashMap<(usize, usize), Vec<usize>>,
+    HashMap<(usize, usize), Vec<Option<(usize, usize)>>>,
+) {
+    let mut abstand: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
+    let mut vorgaenger: HashMap<(usize, usize), Vec<Option<(usize, usize)>>> = HashMap::new();
+    const mux: usize = usize::MAX - 5000;
+    let mut Q: HashSet<(usize, usize)> = HashSet::new();
+    for y in 0..G.len() {
+        for x in 0..G[y].len() {
+            if G[y][x] != '#' {
+                abstand.insert((x, y), vec![mux; 4]);
+                vorgaenger.insert((x, y), vec![None; 4]);
+                Q.insert((x, y));
+            }
+        }
+    }
+    abstand.insert(s, vec![mux, mux, 0, mux]);
+
+    while !Q.is_empty() {
+        let &u = Q
+            .iter()
+            .min_by_key(|u| abstand.get(&u).unwrap().iter().min().unwrap())
+            .unwrap();
+
+        Q.remove(&u);
+
+        for dir in DIRS {
+            let v = (u.0 as i32 + dir.0, u.1 as i32 + dir.1);
+            if v.0 >= 0 && v.1 >= 0 {
+                let v = (v.0 as usize, v.1 as usize);
+                if v.0 < G.len() && v.1 < G.len() && G[v.1][v.0] != '#' {
+                    let a = abstand.get(&u).unwrap();
+                    let mut alt = usize::MAX;
+                    for i in 0..DIRS.len() {
+                        let mut w = a[i];
+                        if dir_to_index(dir) != i {
+                            w += 1000;
+                        }
+                        w += 1;
+                        if w < alt {
+                            alt = w;
+                        }
+                    }
+                    let a_v = abstand.get_mut(&v).unwrap();
+                    if alt < a_v[dir_to_index(dir)] {
+                        a_v[dir_to_index(dir)] = alt;
+                        vorgaenger.get_mut(&v).unwrap()[dir_to_index(dir)] = Some(u);
+                    }
+                }
+            }
+        }
+    }
+
+    return (abstand, vorgaenger);
+}
+
+static NORTH: usize = 0;
+static SOUTH: usize = 1;
+static EAST: usize = 2;
+static WEST: usize = 3;
+static DIRS: [(i32, i32); 4] = [(0, -1), (0, 1), (1, 0), (-1, 0)];
+
+fn dir_to_index(dir: (i32, i32)) -> usize {
+    return match dir {
+        (-1, 0) => WEST,
+        (1, 0) => EAST,
+        (0, 1) => SOUTH,
+        (0, -1) => NORTH,
+        _ => panic!(),
+    };
+}
+
 fn dijkstra(G: &Vec<HashMap<usize, usize>>, s: usize) -> (Vec<usize>, Vec<Vec<usize>>) {
     let mut abstand: Vec<usize> = vec![usize::MAX - 5000; G.len()];
     let mut vorgaenger: Vec<Vec<usize>> = vec![Vec::new(); G.len()];
-    let mut Q: Vec<usize> = Vec::new();
-    for y in 0..G.len() {
-        Q.push(y);
-    }
     abstand[s] = 0;
+
+    let mut Q: Vec<usize> = Vec::new();
+    // for y in 0..G.len() {
+    //     Q.push(y);
+    // }
+    Q.push(s);
     while !Q.is_empty() {
-        let (i, &u) = Q
-            .iter()
-            .enumerate()
-            .min_by(|&a, &b| abstand[*a.1].cmp(&abstand[*b.1]))
-            .unwrap();
+        // let (i, &u) = Q
+        //     .iter()
+        //     .enumerate()
+        //     .min_by(|&a, &b| abstand[*a.1].cmp(&abstand[*b.1]))
+        //     .unwrap();
+        // Q.remove(i);
+
+        let u = Q.pop().unwrap();
 
         for (&v, &w) in G[u].iter() {
-            if Q.contains(&v) {
-                let alt = abstand[u] + w;
-                if alt < abstand[v] {
-                    abstand[v] = alt;
-                    vorgaenger[v] = vec![u];
+            let alt = abstand[u] + w;
+            if alt < abstand[v] {
+                abstand[v] = alt;
+                vorgaenger[v] = vec![u];
+                Q.push(v);
+            }
+            if alt == abstand[v] {
+                if !vorgaenger[v].contains(&u) {
+                    vorgaenger[v].push(u);
                 }
-                if alt == abstand[v] {
+            }
+        }
+    }
+    return (abstand, vorgaenger);
+}
+
+fn bellman_ford(G: &Vec<HashMap<usize, usize>>, s: usize) -> (Vec<usize>, Vec<Vec<usize>>) {
+    let mut abstand: Vec<usize> = vec![usize::MAX - 5000; G.len()];
+    let mut vorgaenger: Vec<Vec<usize>> = vec![Vec::new(); G.len()];
+    abstand[s] = 0;
+
+    for _ in 0..G.len() - 1 {
+        for u in 0..G.len() {
+            for (&v, &w) in &G[u] {
+                if abstand[u] + w < abstand[v] {
+                    abstand[v] = abstand[u] + w;
+                    vorgaenger[v] = vec![u];
+                } else if abstand[u] + w == abstand[v] {
                     if !vorgaenger[v].contains(&u) {
                         vorgaenger[v].push(u);
                     }
                 }
             }
         }
-        Q.remove(i);
     }
     return (abstand, vorgaenger);
 }
@@ -167,6 +289,24 @@ fn print_maze(input: &Vec<Vec<char>>, paths: &Vec<Vec<(usize, usize)>>) {
                 }
             }
             if contains {
+            } else if input[y][x] == '#' {
+                s.push_str(String::from('▓').blue().to_string().as_str());
+            } else {
+                s.push(input[y][x]);
+            }
+        }
+        s.push('\n');
+    }
+    println!("{s}");
+}
+
+fn print_maze2(input: &Vec<Vec<char>>, path: &Vec<(usize, usize)>) {
+    // clearscreen::clear().unwrap();
+    let mut s = String::new();
+    for y in 0..input.len() {
+        for x in 0..input[y].len() {
+            if path.contains(&(x, y)) {
+                s.push_str(String::from('*').red().to_string().as_str());
             } else if input[y][x] == '#' {
                 s.push_str(String::from('▓').blue().to_string().as_str());
             } else {
