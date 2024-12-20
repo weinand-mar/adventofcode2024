@@ -21,6 +21,12 @@ fn main() {
         g[x + y * w] = '#';
         if let None = a_star(&g, s, e) {
             println!("{x}, {y}");
+
+            g[x + y * w] = '.';
+            let vorgaenger = a_star(&g, s, e).unwrap();
+            let path = trace_path(&vorgaenger, e);
+            print_the_thing(&g, &path);
+
             break;
         }
     }
