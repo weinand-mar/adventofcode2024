@@ -72,3 +72,11 @@ pub fn read_file_into_list_of_list_of_chars(path: &str) -> Vec<Vec<char>> {
     .map(|x| x.as_bytes().iter().map(|&x| x as char).collect())
     .collect();
 }
+
+pub fn read_2d_grid(path: &str) -> Vec<char> {
+    let read_to_string = fs::read_to_string(path).unwrap();
+
+    return read_to_string.lines().into_iter()
+    .flat_map(|x| x.as_bytes().iter().map(|&x| x as char))
+    .collect();
+}
