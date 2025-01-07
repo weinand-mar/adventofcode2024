@@ -1,59 +1,93 @@
-use std::u64;
+use std::{collections::VecDeque, u64};
 
 fn main() {
-    let from = 0b100000000000000000000000000000000000000000000000;
-    let to = 0b111111111111111111111111111111111111111111111111;
-    let num_of_threads = 128;
-    let per_thread = (to - from) / num_of_threads;
-    let mut threads = Vec::new();
-    for i in 0..num_of_threads {
-        let local_from = from + i * per_thread;
-        let local_to = from + i * per_thread + per_thread;
-        threads.push(std::thread::spawn(move || {
-            let input = utils::read_file_into_list("day17/puzzle1/input");
+    let input = utils::read_file_into_list("day17/puzzle1/input");
 
-            let a = input[0].split_whitespace().collect::<Vec<&str>>()[2]
-                .parse::<u64>()
-                .unwrap();
-            let b = input[1].split_whitespace().collect::<Vec<&str>>()[2]
-                .parse::<u64>()
-                .unwrap();
-            let c = input[2].split_whitespace().collect::<Vec<&str>>()[2]
-                .parse::<u64>()
-                .unwrap();
-        
-            let program = input[4].split_whitespace().collect::<Vec<&str>>()[1]
-                .split(",")
-                .map(|x| x.parse::<u64>().unwrap())
-                .collect::<Vec<u64>>();
+    let a = input[0].split_whitespace().collect::<Vec<&str>>()[2]
+        .parse::<u64>()
+        .unwrap();
+    let b = input[1].split_whitespace().collect::<Vec<&str>>()[2]
+        .parse::<u64>()
+        .unwrap();
+    let c = input[2].split_whitespace().collect::<Vec<&str>>()[2]
+        .parse::<u64>()
+        .unwrap();
+
+    let program = input[4].split_whitespace().collect::<Vec<&str>>()[1]
+        .split(",")
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<Vec<u64>>();
+
+    let mut stack = VecDeque::new();
+    for i in 0..((2 as u64).pow(10)) {
+        let mut p = Program {
+            a: i,
+            b,
+            c,
+            program: program.clone(),
+            ip: 0,
+            out: vec![],
+        };
+        p.run();
+        if p.out[0] == p.program[0] {
+            println!("{i}, {:?}", p.out);
+            stack.push_back((0, i));
+        }
+    }
+
+    let mut result = (0, 0);
+    'outer: while let Some(pop) = stack.pop_front() {
+        let (i, a) = pop;
+        for j in 0..((2 as u64).pow(10)) {
+            let a_new = (j << (3 * (i + 1))) + a % ((2 as u64).pow(3 * (i + 1)));
             
+            if stack.contains(&((i+1), a_new)) {
+                continue;
+            }
             let mut p = Program {
-                a,
+                a: a_new,
                 b,
                 c,
-                program,
+                program: program.clone(),
                 ip: 0,
                 out: vec![],
             };
-            for j in local_from..local_to + 1 {
-                p.a = j;
-                p.run();
-                if p.out.len() == p.program.len()
-                    && p.out.iter().enumerate().all(|x| *x.1 == p.program[x.0])
-                {
-                    println!("{}", j);
+            p.run();
+            let mut valid = true;
+            let mut valid_till_index = 0;
+            for x in 0..p.out.len().min(i as usize + 2) {
+                if p.out[x] != p.program[x] {
+                    valid = false;
+                    break;
                 }
-                p.b = b;
-                p.c = c;
-                p.out.clear();
-                p.ip = 0;
+                valid_till_index += 1;
             }
-        }));
+
+            if valid {
+                if valid_till_index == p.program.len() && p.out.len() == p.program.len() {
+                    println!("{a_new}, {:?}", p.out);
+                    result = (i + 1, a_new);
+                    break 'outer;
+                } else {
+                    println!("{i}, {a_new}, {:?}", p.out);
+                    stack.push_back((i + 1, a_new));
+                }
+            }
+        }
     }
 
-    for t in threads {
-        t.join();
-    }
+    println!("{:?}", result);
+
+    let mut p = Program {
+        a: 251341328432143,
+        b,
+        c,
+        program: program.clone(),
+        ip: 0,
+        out: vec![],
+    };
+    p.run();
+    println!("{:?}", p.out);
 }
 
 #[derive(Debug)]
